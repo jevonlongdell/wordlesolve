@@ -1,16 +1,26 @@
+#! python3
+
 import math
 
+# read in the list of five letter words
 words = open('fiveletterwords','r').readlines()
-
 words = list(map(str.strip,words))
 
-greenstring = input("Enter green letters (in form h.l..) > ")
-orangestring = input('Enter orange letters for each of the five letters, separated by four commas >')
-greystring = input('Enter letters not in word > ')
+
+greenstring = input("Enter green letters. The ones you know for sure, put a dot for the ones you don't know (in form h.l..)\n> ");
+
+priororange = []
+for k in range(5):
+    x = input("Enter the orange letters that have occured for letter number %d\n (just the letters, any order, no spaces between them, just hit enter if there are none)\n> "%(k+1))
+    priororange.append(set(x))
+
+
+#orangestring = input('Enter orange letters for each of the five letters, separated by four commas >')
+greystring = input('Enter letters not in word (the ones that appear grey, with no spaces between them, any order)\n just hit enter if there are none > ')
 
 #what we know so far
 priorgreen = list(greenstring)
-priororange = list(map(set,orangestring.split(',')))
+#priororange = list(map(set,orangestring.split(',')))
 priorgrey = set(greystring)
 
 #priorgreen  = list('.i.es')
@@ -51,9 +61,6 @@ for w in words:
 
 
 
-print("Possible words:")
-print(possiblewords)
-
 
 N = len(possiblewords)
 
@@ -72,6 +79,7 @@ if N==0:
     print('Couldn\'t find any compatible words?')
 elif N==1:
     print("Done!")
+    print(possiblewords)
 else:
     Hvals = dict()
     Hbest = Hinit
@@ -113,6 +121,17 @@ else:
 
     sorted_H = sorted(Hvals.items(), key = lambda item: item[1])
 
-
-    print("Goodwords to try next (first is best)")
-    print(sorted_H[:5])
+    print()
+    print()
+    print("Possible solutions")
+    print(possiblewords)
+    print()
+    print()
+    print("some possible words with resulting entropies if they are used as a guess")
+    possible_Hvals = {w: Hvals[w] for w in possiblewords}
+    sorted_possible_Hvals = sorted(possible_Hvals.items(), key = lambda item: item[1])
+    print(sorted_possible_Hvals[:10])
+    print ()
+    print()
+    print("Goodwords to try next and the corresponding entropy (if in doubt try first one of these)")
+    print(sorted_H[:10])

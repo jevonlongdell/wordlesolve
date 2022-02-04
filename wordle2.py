@@ -22,22 +22,38 @@ for w in wordfreq.iter_wordlist('en'):
 #words = open('fiveletterwords','r').readlines()
 #words = list(map(str.strip,words))
 
+print()
+print()
 
 greenstring = input("Enter green letters. The ones you know for sure, put a dot for the ones you don't know (in form h.l..)\n> ");
 
-priororange = []
-for k in range(5):
-    x = input("Enter the orange letters that have occured for letter number %d\n (just the letters, any order, no spaces between them, just hit enter if there are none)\n> "%(k+1))
-    priororange.append(set(x))
+
+if greenstring=='':
+        greenstring='.....'
 
 
-#orangestring = input('Enter orange letters for each of the five letters, separated by four commas >')
-greystring = input('Enter letters not in word (the ones that appear grey, with no spaces between them, any order)\n just hit enter if there are none > ')
+print()
+print()
+#priororange = []
+#for k in range(5):
+#    x = input("Enter the orange letters that have occured for letter number %d\n (just the letters, any order, no# spaces between them, just hit enter if there are none)\n> "%(k+1))
+#    priororange.append(set(x))
+orangestring = input('Enter orange letters for each of the five letters, separated by four spaces, dots ignored\n> ')
+if orangestring=='':
+        orangestring=". . . . ."
+
+
+print()
+print()
+greystring = input('Enter letters not in word (the ones that appear grey, with no spaces between them, any order)\n just hit enter if there are none \n> ')
+
 
 #what we know so far
 priorgreen = list(greenstring)
-#priororange = list(map(set,orangestring.split(',')))
+priororange = list(map(set,orangestring.split(' ')))
+priororange = [ s-set('.') for s in priororange]
 priorgrey = set(greystring)
+
 
 #priorgreen  = list('.i.es')
 #priororange = list(map(set,"s,,,,n".split(',')))

@@ -3,9 +3,18 @@
 import math
 import wordfreq 
 import re
+from multiprocessing import Pool
+import os
+
+
 
 def is_5digit_lowercase(s):
         return re.match("^[a-z][a-z][a-z][a-z][a-z]$", s)
+
+
+
+def
+
 
 words = {}
 Ndict = 5000
@@ -45,14 +54,22 @@ if orangestring=='':
 
 print()
 print()
-greystring = input('Enter letters not in word (the ones that appear grey, with no spaces between them, any order)\n just hit enter if there are none \n> ')
+greystring = input('Enter letters that you have tried so fa (with no spaces between them, any order)\n just hit enter if there are none \n> ')
 
 
 #what we know so far
 priorgreen = list(greenstring)
 priororange = list(map(set,orangestring.split(' ')))
 priororange = [ s-set('.') for s in priororange]
+
 priorgrey = set(greystring)
+# remove space and the letters we have seen from priorgrey
+priorgrey = priorgrey - set(" ")
+for o in priororange:
+        priorgrey = priorgrey - o
+
+for g in priorgreen:
+        priorgrey  = priorgrey - set(g)
 
 
 #priorgreen  = list('.i.es')
@@ -127,6 +144,13 @@ else:
     Hbest = Hinit
     for guess in words:
         outcomes = dict()
+
+        # for a given guess goes through all the posible mystery
+        # words and works out what the outcome would be for each
+        # of those possble mystery words
+        # returns a dict of which takes the orange,green,grey info
+        # an maps to a list of possible mystery words
+        
         for mysteryword in possiblewords:
             green = ['.', '.', '.', '.', '.']
             orange = [set(), set(), set(), set(), set()]

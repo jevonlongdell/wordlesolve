@@ -73,14 +73,33 @@ def calc_resulting_entropy(guess,possiblewords,words):
 if __name__ == "__main__":
     words = {}
     Ndict = 10000
-    probsum = 0
+    
+
     for w in wordfreq.iter_wordlist('en'):
         if is_5digit_lowercase(w):
             words[w] = wordfreq.word_frequency(w,'en')
-            probsum += words[w]
             if len(words)>=Ndict:
                 break
 
+    probsum = 0
+    #for w in words:
+    #        probsum += words[w]
+
+    #for w in words:
+    #        words[w]/=probsum
+
+
+    #assume probability of a word being the answer 
+    #exponentially decays with the popularity rank
+    for (k,w) in enumerate(words):
+            words[w] = math.exp(-k/3000)
+            probsum+=words[w]
+    
+    for w in words:
+        words[w]/=probsum
+
+
+    
 
     # read in the list of five letter words
     #words = open('fiveletterwords','r').readlines()
@@ -195,9 +214,6 @@ if __name__ == "__main__":
         print("Done!")
         print(possiblewords)
     else:
-
-
-
         ncpu = os.cpu_count()
         pool = Pool(ncpu)
         H = pool.starmap(calc_resulting_entropy, [ (g,possiblewords,words) for g in words.keys()])

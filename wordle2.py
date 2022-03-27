@@ -7,6 +7,8 @@ from multiprocessing import Pool, cpu_count
 import os
 
 
+lang='en'
+
 
 def is_5digit_lowercase(s):
         return re.match("^[a-z][a-z][a-z][a-z][a-z]$", s)
@@ -72,12 +74,12 @@ def calc_resulting_entropy(guess,possiblewords,words):
 
 if __name__ == "__main__":
     words = {}
-    Ndict = 10000
+    Ndict = 20000
     
 
-    for w in wordfreq.iter_wordlist('en'):
+    for w in wordfreq.iter_wordlist(lang):
         if is_5digit_lowercase(w):
-            words[w] = wordfreq.word_frequency(w,'en')
+            words[w] = wordfreq.word_frequency(w,lang)
             if len(words)>=Ndict:
                 break
 
@@ -244,8 +246,8 @@ if __name__ == "__main__":
         print("some possible words with resulting entropies if they are used as a guess")
         possible_Hvals = {w: Hvals[w] for w in possiblewords}
         sorted_possible_Hvals = sorted(possible_Hvals.items(), key = lambda item: item[1])
-        print(sorted_possible_Hvals[:10])
+        print(sorted_possible_Hvals[:20])
         print ()
         print()
         print("Goodwords to try next and the corresponding entropy (if in doubt try first one of these)")
-        print(sorted_H[:10])
+        print(sorted_H[:20])

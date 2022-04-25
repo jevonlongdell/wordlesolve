@@ -12,6 +12,7 @@ use libm::log2;
 use std::cmp::min;
 use itertools::izip;
 use ::permutation::*;
+use indexmap::IndexMap;
 
 //use text_io::read;
 
@@ -34,7 +35,7 @@ struct Info {
     grey: Vec<char>,
 }
         
-fn cal_resulting_entropy(guess: &str, possiblewords: &Vec<&str>, words: &HashMap<String,f64>, pnorm: f64) -> f64 {
+fn cal_resulting_entropy(guess: &str, possiblewords: &Vec<&str>, words: &IndexMap<String,f64>, pnorm: f64) -> f64 {
     // Calculates the resulting entropy for a particular guess
     // given the possible mystery words that are left
 
@@ -101,9 +102,11 @@ fn cal_resulting_entropy(guess: &str, possiblewords: &Vec<&str>, words: &HashMap
                 let p = words.get(*w).unwrap()/pnorm;
                 poutcome += p;
             }
+            //println!("{:?} {}",wds,poutcome);
             for w in wds {
-                let p = words.get(*w).unwrap()/pnorm;
-                Houtcome = - p/poutcome * log2(p/poutcome);
+                let p = words.get(*w).unwrap()/(pnorm*poutcome);
+                //print("{} {}",w,)
+                Houtcome += - p * log2(p);
             }
             H+= poutcome*Houtcome;
         }
@@ -129,13 +132,14 @@ fn cal_resulting_entropy(guess: &str, possiblewords: &Vec<&str>, words: &HashMap
         
         //let mut wordlist : Vec<String> = [].to_vec();//Vec<String>;
         
-        let mut words: HashMap<String,f64> = HashMap::new();
+        let mut words: IndexMap<String,f64> = IndexMap::new();
         let mut probsum =0.0;
         for (k, line) in reader.lines().enumerate() {
-            let p= exp((k as f64) / 3000.0);
+            let p= exp(-(k as f64) / 3000.0);
             probsum += p;
             words.insert(line.unwrap(), p);
         }
+
         for (_, p) in words.iter_mut(){
             *p /= probsum;
         }
@@ -239,20 +243,20 @@ fn cal_resulting_entropy(guess: &str, possiblewords: &Vec<&str>, words: &HashMap
         }
         
         //Calculate current (initial) entropy 
-        let N = possiblewords.len();
+        let n = possiblewords.len();
         
-        if N==0{
+        if n==0{
             println!("No compatibile words found");
             return;
         }
         
-        if N==1{
+        if n==1{
             println!("The answer is {}!",possiblewords[0]);
             return;
         }
         
-        let nw= min(30,N);
-        println!("Found {} possilbe words, the first {} are:",N,nw);
+        let nw= min(30,n);
+        println!("Found {} possilbe words, the first {} are:",n,nw);
         for w in possiblewords.iter().take(nw){
             print!("{} ",w)
         }
@@ -262,8 +266,10 @@ fn cal_resulting_entropy(guess: &str, possiblewords: &Vec<&str>, words: &HashMap
         let mut Hinit = 0.0;
         let mut probsum=0.0;
         for w in possiblewords.iter(){
-            probsum+=words.get(w as &str).unwrap();
-        }   
+            let p = words.get(w as &str).unwrap();
+            probsum+=p;
+            //println!("{} {}",probsum,p);
+        }
         for w in possiblewords.iter(){
             let p = words.get(w as &str).unwrap();
             Hinit -= p/probsum *log2(p/probsum);
@@ -277,16 +283,23 @@ fn cal_resulting_entropy(guess: &str, possiblewords: &Vec<&str>, words: &HashMap
             
         // }
         
-        println!("Initial entropy = {} bits",Hinit);
+        println!("Initial entropy = {:.1} bits",Hinit);
         
         
-        let mut Hvals :HashMap<String,f64> = HashMap::new();
+        let mut Hvals :IndexMap<String,f64> = IndexMap::new();
         let mut wordvec = Vec::new();
         let mut Hvec = Vec::new();
+        let mut hbest = Hinit;
 
+        //cal_resulting_entropy("about", &possiblewords, &words, probsum);
+        //return;
         for (guess,_) in words.iter(){
 //            println!("{}",guess);
             let entropy =  cal_resulting_entropy(guess, &possiblewords, &words, probsum);
+            if entropy < hbest{
+                //println!(" Best so far {} with entropy {:.2}",guess,entropy);
+                hbest=entropy;
+            }            
             Hvals.insert(guess.to_string(),entropy);
             Hvec.push(entropy);
             wordvec.push(guess);
@@ -300,7 +313,9 @@ fn cal_resulting_entropy(guess: &str, possiblewords: &Vec<&str>, words: &HashMap
 
         println!();println!();
         println!("Possible solutions and resulting entropy");
-        for w in possiblewords.iter(){
+
+        possiblewords.sort_by(|a,b| Hvals.get(a as &str).unwrap().partial_cmp(Hvals.get(b as &str).unwrap()).unwrap());
+        for w in possiblewords.iter().take(40){
             print!("({}, {:.2}), ", w, Hvals.get(w as &str).unwrap());
         }
         
@@ -309,7 +324,7 @@ fn cal_resulting_entropy(guess: &str, possiblewords: &Vec<&str>, words: &HashMap
 
         println!();println!();
         println!("Words that will narrow down what the answer are");
-        let ordering = permutation::sort_by(&Hvec,|a, b| b.partial_cmp(a).unwrap());
+        let ordering = permutation::sort_by(&Hvec,|a, b| a.partial_cmp(b).unwrap());
         let Hvec = ordering.apply_slice(Hvec);
         let wordvec = ordering.apply_slice(wordvec);
         for (k,(w,h)) in wordvec.iter().zip(Hvec.iter()).enumerate(){

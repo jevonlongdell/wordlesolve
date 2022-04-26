@@ -62,6 +62,7 @@ def calc_resulting_entropy(guess,possiblewords,words):
         Houtcome =0 # resulting entropy for if this is the outcome 
         for w in outcomes[outcome]:
             poutcome += words[w]
+        #print(outcomes[outcome],poutcome)
         for w in outcomes[outcome]:
             Houtcome += - words[w]/poutcome * math.log2( words[w] / poutcome) 
 
@@ -200,6 +201,7 @@ if __name__ == "__main__":
         probsum=0
         for w in possiblewords:
             probsum+=words[w]
+        #    print(probsum, words[w])
         for w in possiblewords:
             words[w] /= probsum
             Hinit = Hinit  - words[w] * math.log2 (words[w])
@@ -216,6 +218,8 @@ if __name__ == "__main__":
         print("Done!")
         print(possiblewords)
     else:
+    #    calc_resulting_entropy("about",possiblewords,words)
+#    if False:
         ncpu = os.cpu_count()
         pool = Pool(ncpu)
         H = pool.starmap(calc_resulting_entropy, [ (g,possiblewords,words) for g in words.keys()])
@@ -231,7 +235,7 @@ if __name__ == "__main__":
         for (guess,Hval) in zip(words,H):
             Hvals[guess] = Hval
             if Hval < Hbest:
-                #print("Best so far %s with entropy %g"%(guess,H))
+                #print("Best so far %s with entropy %g"%(guess,Hval))
                 Hbest = Hval
 
 

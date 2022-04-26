@@ -1,3 +1,8 @@
+#![allow(non_snake_case)]
+
+
+extern crate rayon;
+
 //use lazy_static::lazy_static;
 //use regex::Regex;
 use std::fs::File;
@@ -13,23 +18,13 @@ use std::cmp::min;
 use itertools::izip;
 use ::permutation::*;
 use indexmap::IndexMap;
-
-//use text_io::read;
-
-
-use std::hash::{Hash};
+use rayon::prelude::*;
 
 
-// fn is_five_letter_lowercase(text: &str) -> bool {
-//     lazy_static! {
-//         static ref RE: Regex = Regex::new("^[a-z][a-z][a-z][a-z][a-z]$").unwrap();
-//     }
-//     RE.is_match(text)
-// }
 
 //used to describe the info held about the mystery word
 #[derive(PartialEq, Eq, PartialOrd, Ord, Hash)]
-struct Info {
+struct Clues {
     green: Vec<char>,
     orange: Vec<Vec<char>>,
     grey: Vec<char>,
@@ -37,18 +32,23 @@ struct Info {
         
 fn cal_resulting_entropy(guess: &str, possiblewords: &Vec<&str>, words: &IndexMap<String,f64>, pnorm: f64) -> f64 {
     // Calculates the resulting entropy for a particular guess
-    // given the possible mystery words that are left
+    // given the possible mystery words that are left.
+    //
+    // This doesn't take into account the current clues (green, orange and grey)
+    // that we already have, and it probably should.
 
-    let mut outcomes: HashMap<Info,Vec<&str>> = HashMap::new();
+    
+    let mut outcomes: HashMap<Clues,Vec<&str>> = HashMap::new();
 
     // # for a given guess goes through all the posible mystery
-    // # words and works out what the outcome would be for each
+    // # words and works out what the outcome (Clues) would be for each
     // # of those possble mystery words
-    // # returns a dict of which takes the orange,green,grey info
+    // # returns a dict of which takes the clue info
     // # an maps to a list of possible mystery words
     
     for mysteryword in possiblewords.iter(){
 
+        //make empt set of clues 
         let mut green: Vec<char> = ".....".chars().collect();
         let mut orange: Vec<Vec<char>> = Vec::new();
         for _k in 0..5 {
@@ -69,7 +69,7 @@ fn cal_resulting_entropy(guess: &str, possiblewords: &Vec<&str>, words: &IndexMa
         }
         
         
-        let info = Info{
+        let info = Clues{
             green: green.clone(),
             orange: orange.clone(),
             grey: grey.clone(),
@@ -81,39 +81,37 @@ fn cal_resulting_entropy(guess: &str, possiblewords: &Vec<&str>, words: &IndexMa
         } else {
             outcomes.insert(info, vec![mysteryword]);
         }
+        // If we've seen theese clues before then add them to list of words
+        // otherwise add a new key to hash table.
+
         //would be nice to do something like this if I could work out how
+        // match outcomes.get_mut(&info){
+        //     Some(x) => x.push(*mysteryword),
+        //     None => outcomes.insert(info, vec![mysteryword]),
         // }
-        // // match outcomes.get_mut(&info){
-            //     Some(&mut words) => words.push(*mysteryword),
-            //     None => outcomes.insert(info, vec![mysteryword]),
-            // }
-            
-            
         }
-        
-        //workout entropy after guess
-        let mut H = 0.0;
-
-
-        for (_info,wds) in outcomes.iter(){
-            let mut poutcome = 0.0; //probablility of this outcome
-            let mut Houtcome = 0.0; //entropy if this is the outcome
-            for w in wds {
-                let p = words.get(*w).unwrap()/pnorm;
-                poutcome += p;
-            }
-            //println!("{:?} {}",wds,poutcome);
-            for w in wds {
-                let p = words.get(*w).unwrap()/(pnorm*poutcome);
-                //print("{} {}",w,)
-                Houtcome += - p * log2(p);
-            }
-            H+= poutcome*Houtcome;
+    //workout entropy after guess
+    let mut H = 0.0;
+    
+    for (_info,wds) in outcomes.iter(){
+        let mut poutcome = 0.0; //probablility of this outcome
+        let mut Houtcome = 0.0; //entropy if this is the outcome
+        for w in wds {
+            let p = words.get(*w).unwrap()/pnorm;
+            poutcome += p;
         }
-        return H;            
-            
+        //println!("{:?} {}",wds,poutcome);
+        for w in wds {
+            let p = words.get(*w).unwrap()/(pnorm*poutcome);
+            //print("{} {}",w,)
+            Houtcome += - p * log2(p);
+        }
+        H+= poutcome*Houtcome;
     }
-        
+    return H;            
+    
+}
+
     
     
     fn main() {
@@ -285,24 +283,27 @@ fn cal_resulting_entropy(guess: &str, possiblewords: &Vec<&str>, words: &IndexMa
         
         println!("Initial entropy = {:.1} bits",Hinit);
         
+
         
+
         let mut Hvals :IndexMap<String,f64> = IndexMap::new();
-        let mut wordvec = Vec::new();
-        let mut Hvec = Vec::new();
+       
+        
+        let wordvec: Vec<_> = words.keys().collect();
+        let Hvec :Vec<f64> = wordvec.par_iter().map(|guess| cal_resulting_entropy(guess, &possiblewords, &words, probsum)).collect();
+        
         let mut hbest = Hinit;
 
         //cal_resulting_entropy("about", &possiblewords, &words, probsum);
         //return;
-        for (guess,_) in words.iter(){
-//            println!("{}",guess);
-            let entropy =  cal_resulting_entropy(guess, &possiblewords, &words, probsum);
-            if entropy < hbest{
+        for (guess, entropy) in wordvec.iter().zip(Hvec.iter()) {
+            //println!("{}",guess);
+            //let entropy =  cal_resulting_entropy(guess, &possiblewords, &words, probsum);
+            if *entropy < hbest {
                 //println!(" Best so far {} with entropy {:.2}",guess,entropy);
-                hbest=entropy;
+                hbest=*entropy;
             }            
-            Hvals.insert(guess.to_string(),entropy);
-            Hvec.push(entropy);
-            wordvec.push(guess);
+            Hvals.insert(guess.to_string(),*entropy);
         }
 
         

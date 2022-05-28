@@ -23,6 +23,9 @@ with open('wordlist.txt','w') as f:
     for w in words:
         f.write(w+'\n')
 
+with open('wordlist2.txt','w') as f:
+    for w in words:
+        f.write('"%s",'%w)
         
 #probsum = 0
 

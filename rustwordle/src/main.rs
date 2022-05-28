@@ -5,11 +5,11 @@ extern crate rayon;
 
 //use lazy_static::lazy_static;
 //use regex::Regex;
-use std::fs::File;
-use std::path::Path;
-use std::io::BufReader;
+//use std::fs::File;
+//use std::path::Path;
+//use std::io::BufReader;
 use std::io::stdin;
-use std::io::prelude::*;
+//use std::io::prelude::*;
 use std::collections::HashMap;
 use std::collections::HashSet;
 use libm::exp;
@@ -20,41 +20,53 @@ use ::permutation::*;
 use indexmap::IndexMap;
 use rayon::prelude::*;
 
+//use crate::wordlist::wordlist;
+
+mod wordlist;
 
 
 //used to describe the info held about the mystery word
-#[derive(PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
 struct Clues {
     green: Vec<char>,
     orange: Vec<Vec<char>>,
     grey: Vec<char>,
 }
         
-fn cal_resulting_entropy(guess: &str, possiblewords: &Vec<&str>, words: &IndexMap<String,f64>, pnorm: f64) -> f64 {
+
+
+// found this after leaving the code for a while
+// not sure what I was thinking
+// doesn't compile
+
+//fn make_clues_to_words(wordslist :Vec<String>) -> HashMap<Clues,Vec<String>> {
+//    let mut clues_to_words = HashMap<Clues,Vec<String   >> = HashMap::new();
+//    
+//
+//}
+
+
+
+fn cal_resulting_entropy(guess: &str, possiblewords: &Vec<&str>, words: &IndexMap<String,f64>, pnorm: f64, clues: &Clues) -> f64 {
     // Calculates the resulting entropy for a particular guess
     // given the possible mystery words that are left.
-    //
-    // This doesn't take into account the current clues (green, orange and grey)
-    // that we already have, and it probably should.
+  
 
     
     let mut outcomes: HashMap<Clues,Vec<&str>> = HashMap::new();
 
-    // # for a given guess goes through all the posible mystery
+    // # for a given guess goes through all the possible mystery
     // # words and works out what the outcome (Clues) would be for each
-    // # of those possble mystery words
+    // # of those possible mystery words
     // # returns a dict of which takes the clue info
-    // # an maps to a list of possible mystery words
+    // # and maps to a list of possible mystery words
     
     for mysteryword in possiblewords.iter(){
 
         //make empt set of clues 
-        let mut green: Vec<char> = ".....".chars().collect();
-        let mut orange: Vec<Vec<char>> = Vec::new();
-        for _k in 0..5 {
-            orange.push(Vec::new());
-        }
-        let mut grey: Vec<char> = Vec::new();
+        let mut green: Vec<char> = clues.green.clone();
+        let mut orange: Vec<Vec<char>> = clues.orange.clone();
+        let mut grey =  clues.grey.clone();
         
         
         //fill out the greeen orange and grey for the guess and this mystery word
@@ -90,7 +102,9 @@ fn cal_resulting_entropy(guess: &str, possiblewords: &Vec<&str>, words: &IndexMa
         //     None => outcomes.insert(info, vec![mysteryword]),
         // }
         }
-    //workout entropy after guess
+
+    // Work out the entropy for out guess
+
     let mut H = 0.0;
     
     for (_info,wds) in outcomes.iter(){
@@ -100,10 +114,8 @@ fn cal_resulting_entropy(guess: &str, possiblewords: &Vec<&str>, words: &IndexMa
             let p = words.get(*w).unwrap()/pnorm;
             poutcome += p;
         }
-        //println!("{:?} {}",wds,poutcome);
         for w in wds {
             let p = words.get(*w).unwrap()/(pnorm*poutcome);
-            //print("{} {}",w,)
             Houtcome += - p * log2(p);
         }
         H+= poutcome*Houtcome;
@@ -124,23 +136,29 @@ fn cal_resulting_entropy(guess: &str, possiblewords: &Vec<&str>, words: &IndexMa
         //in a list sorted by popularity
         //we read this list in from wordlist.txt 
         
-        let wordlistpath = Path::new("wordlist.txt");
-        let f = File::open(&wordlistpath).unwrap();
-        let reader =  BufReader::new(f);
-        
-        //let mut wordlist : Vec<String> = [].to_vec();//Vec<String>;
+        //let wordlistpath = Path::new("wordlist.txt");
+        //let f = File::open(&wordlistpath).unwrap();
+        //let reader =  BufReader::new(f);
         
         let mut words: IndexMap<String,f64> = IndexMap::new();
         let mut probsum =0.0;
-        for (k, line) in reader.lines().enumerate() {
+        
+        //for (k, line) in reader.lines().enumerate() {
+        //    let p= exp(-(k as f64) / 3000.0);
+        //    probsum += p;
+        //    words.insert(line.unwrap(), p);
+        //}
+        for (k,w) in wordlist::allwords().iter().enumerate(){
             let p= exp(-(k as f64) / 3000.0);
             probsum += p;
-            words.insert(line.unwrap(), p);
+            //println!("{:?}",w);
+            words.insert(w.to_string(),p);
         }
 
         for (_, p) in words.iter_mut(){
             *p /= probsum;
         }
+  
         
         
         // read in the green, orange and grey letters from stdin
@@ -158,7 +176,7 @@ fn cal_resulting_entropy(guess: &str, possiblewords: &Vec<&str>, words: &IndexMa
         println!();
         println!();
         
-        println!("Enter orange letters for each of the five letters, separated by four spaces, dots ignored");
+        println!("Enter orange letters for each of the five letters, separated by four spaces, dots ignored (something like \"gs . s . .\"");
         let mut orangestring = String::new();
         stdin().read_line(&mut orangestring).unwrap();
         let mut orangestring = orangestring.trim();
@@ -169,7 +187,7 @@ fn cal_resulting_entropy(guess: &str, possiblewords: &Vec<&str>, words: &IndexMa
         
         println!();
         println!();
-        println!("Enter letters that you have tried so fa (with no spaces between them, any order)\n just hit enter if there are none");
+        println!("Enter letters that you have tried so far (with no spaces between them, any order)\n just hit enter if there are none");
         let mut greystring = String::new();
         stdin().read_line(&mut greystring).unwrap();
         let greystring = greystring.trim();
@@ -273,13 +291,6 @@ fn cal_resulting_entropy(guess: &str, possiblewords: &Vec<&str>, words: &IndexMa
             Hinit -= p/probsum *log2(p/probsum);
         }
         
-        // {
-        //     for wd in possiblewords.iter(){
-        //         let w = words.get_mut(wd as &str).unwrap();
-        //         *w /= probsum;
-        //     }
-            
-        // }
         
         println!("Initial entropy = {:.1} bits",Hinit);
         
@@ -288,19 +299,22 @@ fn cal_resulting_entropy(guess: &str, possiblewords: &Vec<&str>, words: &IndexMa
 
         let mut Hvals :IndexMap<String,f64> = IndexMap::new();
        
+        // Blank set of clues for cal_resulting_entropy
+        // should populate these to make the entropy calculated more correct,
+        // I think.
+        let clues = Clues {
+            green: ".....".chars().collect(),
+            orange:  vec![Vec::new(), Vec::new(),Vec::new(),Vec::new(),Vec::new()],
+            grey:   Vec::new(),
+        };
         
         let wordvec: Vec<_> = words.keys().collect();
-        let Hvec :Vec<f64> = wordvec.par_iter().map(|guess| cal_resulting_entropy(guess, &possiblewords, &words, probsum)).collect();
+        let Hvec :Vec<f64> = wordvec.par_iter().map(|guess| cal_resulting_entropy(guess, &possiblewords, &words, probsum,&clues)).collect();
         
         let mut hbest = Hinit;
 
-        //cal_resulting_entropy("about", &possiblewords, &words, probsum);
-        //return;
         for (guess, entropy) in wordvec.iter().zip(Hvec.iter()) {
-            //println!("{}",guess);
-            //let entropy =  cal_resulting_entropy(guess, &possiblewords, &words, probsum);
             if *entropy < hbest {
-                //println!(" Best so far {} with entropy {:.2}",guess,entropy);
                 hbest=*entropy;
             }            
             Hvals.insert(guess.to_string(),*entropy);
@@ -335,11 +349,6 @@ fn cal_resulting_entropy(guess: &str, possiblewords: &Vec<&str>, words: &IndexMa
             }
         }
         println!();println!();
-        
-        
-        
-//        println!("{:?} {:?} {:?} {:?} ",priorgreen, priororange,priorgrey,possiblewords);
-        
         
         
     }

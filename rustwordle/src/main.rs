@@ -3,13 +3,7 @@
 
 extern crate rayon;
 
-//use lazy_static::lazy_static;
-//use regex::Regex;
-//use std::fs::File;
-//use std::path::Path;
-//use std::io::BufReader;
 use std::io::stdin;
-//use std::io::prelude::*;
 use std::collections::HashMap;
 use std::collections::HashSet;
 use libm::exp;
@@ -20,7 +14,6 @@ use ::permutation::*;
 use indexmap::IndexMap;
 use rayon::prelude::*;
 
-//use crate::wordlist::wordlist;
 
 mod wordlist;
 
@@ -35,15 +28,6 @@ struct Clues {
         
 
 
-// found this after leaving the code for a while
-// not sure what I was thinking
-// doesn't compile
-
-//fn make_clues_to_words(wordslist :Vec<String>) -> HashMap<Clues,Vec<String>> {
-//    let mut clues_to_words = HashMap<Clues,Vec<String   >> = HashMap::new();
-//    
-//
-//}
 
 
 

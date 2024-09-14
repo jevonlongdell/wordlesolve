@@ -1,0 +1,8 @@
+* Worldesolve
+
+A rust program to solve worldles. You supply it with the current green, and orange letters for each letter position as well as all the letters that have been tried. It gives you:
+
+- A list of possible solutions
+- A list of possible solutions ranked by resulting entropy. The first on this list is the possible solution that will best narrow in on what the answer is.
+- A list of words ranked by the resulting entropy. The first on this list best narrows down what the word is.
+

@@ -138,7 +138,7 @@ fn cal_resulting_entropy(guess: &str, possiblewords: &Vec<&str>, words: &IndexMa
         
         // Read in the green, orange and grey letters from stdin
         
-        println!("Enter green letters. The ones you know for sure, put a dot for the ones you don't know (e.g. h.l..). You can just press enter if there are no green letters");
+        println!("Enter green letters. The ones you know for sure, put a dot for the ones you don't know. For example \"h.l..\". You can just press enter if there are no green letters");
         let mut greenstring =  String::new();
         stdin().read_line(&mut greenstring).unwrap();
         let mut greenstring = greenstring.trim();
@@ -151,12 +151,12 @@ fn cal_resulting_entropy(guess: &str, possiblewords: &Vec<&str>, words: &IndexMa
         println!();
         println!();
         
-        println!("Enter orange letters for each of the five letters, separated by four spaces, dots ignored (something like \"gs . s . .\"");
+        println!("Enter orange letters for each of the five positions, separated by four commas, dots ignored (something like \"gs,.,s,.,.\"");
         let mut orangestring = String::new();
         stdin().read_line(&mut orangestring).unwrap();
         let mut orangestring = orangestring.trim();
         if orangestring==""{
-            orangestring=". . . . .";
+            orangestring=".,.,.,.,.";
         }
         
         
@@ -173,11 +173,13 @@ fn cal_resulting_entropy(guess: &str, possiblewords: &Vec<&str>, words: &IndexMa
         
 //        let mut priororange: Vec<&str> = orangestring.split_whitespace().collect();
         let mut priororange: Vec<&str> = orangestring.split(",").collect();
+	assert_eq!(priororange.len(),5);
         for s in priororange.iter_mut(){
-	    *s.trim();
+	    *s = s.trim();
             if *s=="."{
                 *s = "";
             }
+	    
         }
         assert_eq!(priororange.len(),5);
         

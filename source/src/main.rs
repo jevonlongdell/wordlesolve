@@ -18,7 +18,7 @@ use rayon::prelude::*;
 mod wordlist;
 
 
-//used to describe the info held about the mystery word
+// Used to describe the info held about the mystery word
 #[derive(PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
 struct Clues {
     green: Vec<char>,
@@ -33,17 +33,18 @@ struct Clues {
 
 fn cal_resulting_entropy(guess: &str, possiblewords: &Vec<&str>, words: &IndexMap<String,f64>, pnorm: f64, clues: &Clues) -> f64 {
     // Calculates the resulting entropy for a particular guess
-    // given the possible mystery words that are left.
+    // given the possible mystery words that are left after the
+    // guess is made
   
 
     
     let mut outcomes: HashMap<Clues,Vec<&str>> = HashMap::new();
 
-    // # for a given guess goes through all the possible mystery
-    // # words and works out what the outcome (Clues) would be for each
-    // # of those possible mystery words
-    // # returns a dict of which takes the clue info
-    // # and maps to a list of possible mystery words
+    // For a given guess goes through all the possible mystery
+    // words and works out what the outcome (Clues) would be for each
+    // of those possible mystery words
+    // returns a dict of which takes the clue info
+    // and maps to a list of possible mystery words
     
     for mysteryword in possiblewords.iter(){
 
@@ -53,7 +54,7 @@ fn cal_resulting_entropy(guess: &str, possiblewords: &Vec<&str>, words: &IndexMa
         let mut grey =  clues.grey.clone();
         
         
-        //fill out the greeen orange and grey for the guess and this mystery word
+        // Fill out the greeen orange and grey for the guess and this mystery word
         for (wchar,greenchar,orange_item,guesschar) in izip!(mysteryword.chars(),green.iter_mut(),orange.iter_mut(),guess.chars()){
             if wchar == guesschar {
                 *greenchar = guesschar ;
@@ -112,30 +113,20 @@ fn cal_resulting_entropy(guess: &str, possiblewords: &Vec<&str>, words: &IndexMa
     
     fn main() {
         
+        // The "words" hash map stores the prior
+        // probability for each word. 
+        // we take the prior proability to be 
+        // prob = exp(-k/3000) where k is the index of the word
+        // in a list sorted by popularity
+        // we get this word list from the include module wordlist
         
-        //The "words" hash map stores the prior
-        //probability for each word. 
-        //we take the prior proability to be 
-        //prob = exp(-k/3000) where k is the index of the word
-        //in a list sorted by popularity
-        //we read this list in from wordlist.txt 
-        
-        //let wordlistpath = Path::new("wordlist.txt");
-        //let f = File::open(&wordlistpath).unwrap();
-        //let reader =  BufReader::new(f);
         
         let mut words: IndexMap<String,f64> = IndexMap::new();
         let mut probsum =0.0;
         
-        //for (k, line) in reader.lines().enumerate() {
-        //    let p= exp(-(k as f64) / 3000.0);
-        //    probsum += p;
-        //    words.insert(line.unwrap(), p);
-        //}
         for (k,w) in wordlist::allwords().iter().enumerate(){
             let p= exp(-(k as f64) / 3000.0);
             probsum += p;
-            //println!("{:?}",w);
             words.insert(w.to_string(),p);
         }
 
@@ -145,9 +136,9 @@ fn cal_resulting_entropy(guess: &str, possiblewords: &Vec<&str>, words: &IndexMa
   
         
         
-        // read in the green, orange and grey letters from stdin
+        // Read in the green, orange and grey letters from stdin
         
-        println!("Enter green letters. The ones you know for sure, put a dot for the ones you don't know (in form h.l..)");
+        println!("Enter green letters. The ones you know for sure, put a dot for the ones you don't know. For example \"h.l..\". You can just press enter if there are no green letters");
         let mut greenstring =  String::new();
         stdin().read_line(&mut greenstring).unwrap();
         let mut greenstring = greenstring.trim();
@@ -160,18 +151,18 @@ fn cal_resulting_entropy(guess: &str, possiblewords: &Vec<&str>, words: &IndexMa
         println!();
         println!();
         
-        println!("Enter orange letters for each of the five letters, separated by four spaces, dots ignored (something like \"gs . s . .\"");
+        println!("Enter orange letters for each of the five positions, separated by four commas, dots ignored (something like \"gs,.,s,.,.\"");
         let mut orangestring = String::new();
         stdin().read_line(&mut orangestring).unwrap();
         let mut orangestring = orangestring.trim();
         if orangestring==""{
-            orangestring=". . . . .";
+            orangestring=".,.,.,.,.";
         }
         
         
         println!();
         println!();
-        println!("Enter letters that you have tried so far (with no spaces between them, any order)\n just hit enter if there are none");
+        println!("Enter letters that you have tried so far:\n(with no spaces between them, any order,repetition is OK, entering the green and orange letters is optional)\n just hit enter if there are none");
         let mut greystring = String::new();
         stdin().read_line(&mut greystring).unwrap();
         let greystring = greystring.trim();
@@ -180,11 +171,15 @@ fn cal_resulting_entropy(guess: &str, possiblewords: &Vec<&str>, words: &IndexMa
         // subsequent computation
         let priorgreen = greenstring;
         
-        let mut priororange: Vec<&str> = orangestring.split_whitespace().collect();
+//        let mut priororange: Vec<&str> = orangestring.split_whitespace().collect();
+        let mut priororange: Vec<&str> = orangestring.split(",").collect();
+	assert_eq!(priororange.len(),5);
         for s in priororange.iter_mut(){
+	    *s = s.trim();
             if *s=="."{
                 *s = "";
             }
+	    
         }
         assert_eq!(priororange.len(),5);
         
